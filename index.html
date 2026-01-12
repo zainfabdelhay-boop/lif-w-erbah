@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>لف واربح</title>
+<style>
+body{background:#111;color:#fff;font-family:Arial;text-align:center}
+#wheel{width:240px;height:240px;border-radius:50%;margin:20px auto;
+border:8px solid red;
+background:conic-gradient(green 0deg 60deg, red 60deg 120deg,
+green 120deg 180deg, red 180deg 240deg,
+green 240deg 300deg, red 300deg 360deg);}
+button,input{padding:10px 15px;margin:5px;border-radius:6px;border:none}
+#spin{background:red;color:white;font-size:18px}
+#msg{margin-top:15px;font-size:18px}
+</style>
+</head>
+
+<body>
+<h1>🎡 لف واربح</h1>
+<p>عدد لفاتك: <span id="spins">1</span></p>
+
+<div id="wheel"></div>
+<button id="spin">لف العجلة</button>
+<div id="msg"></div>
+
+<hr>
+<h3>🔐 شحن لفات (شام كاش)</h3>
+<input id="code" placeholder="أدخل كود الشحن">
+<button onclick="redeem()">شحن</button>
+
+<script>
+let spins = 1;
+const codes = {
+ "SHAM10":5,
+ "SHAM20":12,
+ "SHAM50":40
+};
+
+document.getElementById("spin").onclick = ()=>{
+ if(spins<=0){
+  document.getElementById("msg").innerText="❌ لا يوجد لفات، اشحن!";
+  return;
+ }
+ spins--;
+ update();
+ let deg=Math.floor(Math.random()*360);
+ document.getElementById("wheel").style.transform="rotate("+deg+"deg)";
+ setTimeout(()=>{
+  if(deg%2==1){
+   spins++;
+   document.getElementById("msg").innerText="🎉 ربحت لفة!";
+  }else{
+   document.getElementById("msg").innerText="❌ حظ أوفر";
+  }
+  update();
+ },500);
+};
+
+function redeem(){
+ let c=document.getElementById("code").value;
+ if(codes[c]){
+  spins+=codes[c];
+  document.getElementById("msg").innerText="✅ تم شحن "+codes[c]+" لفات";
+  delete codes[c];
+ }else{
+  document.getElementById("msg").innerText="❌ كود غير صحيح";
+ }
+ update();
+}
+
+function update(){
+ document.getElementById("spins").innerText=spins;
+}
+</script>
+</body>
+</html>
