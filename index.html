@@ -8,21 +8,21 @@
 <style>
 body{
   margin:0;
-  background:#111;
-  color:white;
+  background:linear-gradient(#1a1a1a,#000);
   font-family:Arial;
+  color:#fff;
   text-align:center;
 }
 #game{
   width:100%;
   max-width:420px;
-  height:240px;
-  background:linear-gradient(#444,#222);
-  margin:15px auto;
+  height:230px;
+  margin:20px auto;
+  background:linear-gradient(#3a3a3a,#2a2a2a);
+  border-radius:16px;
+  border:2px solid #ff2a2a;
   position:relative;
   overflow:hidden;
-  border-radius:14px;
-  border:2px solid red;
 }
 #ground{
   position:absolute;
@@ -30,149 +30,128 @@ body{
   width:200%;
   height:35px;
   background:repeating-linear-gradient(
-    90deg,#555 0 25px,#666 25px 50px
+    90deg,
+    #555 0 30px,
+    #666 30px 60px
   );
 }
-#duck{
+#player{
   position:absolute;
-  bottom:35px;
   left:50px;
-  width:38px;
-  height:38px;
-  background:radial-gradient(circle at 30% 30%,#FFD700,#FF8C00);
-  border-radius:50% 50% 40% 40%;
-}
-.duck-down{
-  height:22px;
-  width:45px;
+  bottom:35px;
+  width:34px;
+  height:34px;
+  background:radial-gradient(circle at 30% 30%,#00ffcc,#008080);
+  border-radius:50%;
 }
 .obstacle{
   position:absolute;
-  background:#c0392b;
-  border-radius:6px;
-}
-.groundObs{
-  width:25px;
-  height:40px;
   bottom:35px;
-}
-.bird{
-  width:32px;
-  height:18px;
-  background:#eee;
-  top:70px;
-  border-radius:50% 50% 40% 40%;
-}
-
-.controls{
-  margin-top:10px;
+  width:26px;
+  height:42px;
+  background:linear-gradient(#ff5555,#aa0000);
+  border-radius:8px;
 }
 button{
-  padding:12px 20px;
-  font-size:16px;
+  margin-top:10px;
+  padding:12px 30px;
+  font-size:17px;
+  background:#ff2a2a;
+  color:white;
   border:none;
-  border-radius:8px;
-  margin:5px;
+  border-radius:10px;
 }
-#jump{background:#27ae60;color:white}
-#down{background:#2980b9;color:white}
-#msg{margin-top:8px;font-size:18px}
+#msg{
+  margin-top:10px;
+  font-size:18px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>🦆 اركض واربح</h2>
+<h2>🏃‍♂️ اركض واربح</h2>
 <p>المسافة: <span id="score">0</span></p>
 
 <div id="game">
   <div id="ground"></div>
-  <div id="duck"></div>
+  <div id="player"></div>
 </div>
 
-<div class="controls">
-  <button id="jump">قفز ⬆️</button>
-  <button id="down">انحناء ⬇️</button>
-</div>
-
+<button onclick="jump()">قفز</button>
 <div id="msg"></div>
 
 <script>
 const game = document.getElementById("game");
-const duck = document.getElementById("duck");
+const player = document.getElementById("player");
 const ground = document.getElementById("ground");
 const scoreEl = document.getElementById("score");
 const msg = document.getElementById("msg");
 
-let y=0, v=0;
-let gravity=0.9;
-let jumping=false, down=false;
-let speed=4, score=0, gameOver=false;
-let obstacles=[];
+let y = 0;
+let v = 0;
+let gravity = 0.8;
+let jumping = false;
 
-// تحكم
-document.getElementById("jump").ontouchstart =
-document.getElementById("jump").onclick = ()=>{
-  if(jumping||gameOver) return;
-  v=13; jumping=true;
-};
-document.getElementById("down").ontouchstart =
-document.getElementById("down").onclick = ()=>{
-  down=true;
-  duck.classList.add("duck-down");
-};
-document.getElementById("down").ontouchend =
-document.getElementById("down").onmouseup = ()=>{
-  down=false;
-  duck.classList.remove("duck-down");
-};
+let speed = 4;
+let score = 0;
+let gameOver = false;
+let obstacles = [];
 
-// لوب اللعبة
+function jump(){
+  if(jumping || gameOver) return;
+  v = 13;
+  jumping = true;
+}
+
 setInterval(()=>{
   if(gameOver) return;
 
-  // قفز
-  v-=gravity;
-  y+=v;
-  if(y<=0){y=0;v=0;jumping=false;}
-  duck.style.bottom=(35+y)+"px";
+  // حركة اللاعب
+  v -= gravity;
+  y += v;
+  if(y <= 0){
+    y = 0;
+    v = 0;
+    jumping = false;
+  }
+  player.style.bottom = (35 + y) + "px";
 
-  // أرض
-  ground.style.left=(ground.offsetLeft-speed)+"px";
-  if(ground.offsetLeft<=-game.offsetWidth)
-    ground.style.left="0px";
+  // حركة الأرض
+  ground.style.left = (ground.offsetLeft - speed) + "px";
+  if(ground.offsetLeft <= -game.offsetWidth){
+    ground.style.left = "0px";
+  }
 
-  // توليد عوائق
-  if(Math.random()<0.015){
-    let o=document.createElement("div");
-    if(Math.random()<0.5){
-      o.className="obstacle groundObs";
-      o.style.bottom="35px";
-    }else{
-      o.className="obstacle bird";
-      o.style.top="70px";
-    }
-    o.style.right="-40px";
+  // إنشاء عوائق
+  if(Math.random() < 0.02){
+    let o = document.createElement("div");
+    o.className = "obstacle";
+    o.style.right = "-40px";
     game.appendChild(o);
     obstacles.push(o);
   }
 
-  // تحريك وتصادم
+  // تحريك العوائق والتصادم
   obstacles.forEach((o,i)=>{
-    o.style.right=(parseInt(o.style.right)+speed)+"px";
-    let r1=duck.getBoundingClientRect();
-    let r2=o.getBoundingClientRect();
-    if(!(r1.right<r2.left||r1.left>r2.right||r1.bottom<r2.top||r1.top>r2.bottom)){
-      msg.innerText="❌ خسرت!";
-      gameOver=true;
+    o.style.right = (parseInt(o.style.right) + speed) + "px";
+
+    let r1 = player.getBoundingClientRect();
+    let r2 = o.getBoundingClientRect();
+    if(!(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom)){
+      msg.innerText = "❌ خسرت!";
+      gameOver = true;
     }
-    if(o.offsetLeft<-50){
-      o.remove(); obstacles.splice(i,1);
-      score+=10; scoreEl.innerText=score;
-      if(score%100===0) speed+=0.5;
-      if(score>=600){
-        msg.innerText="🎉 ربحت!";
-        gameOver=true;
+
+    if(o.offsetLeft < -50){
+      o.remove();
+      obstacles.splice(i,1);
+      score += 10;
+      scoreEl.innerText = score;
+      if(score % 100 === 0) speed += 0.5;
+      if(score >= 600){
+        msg.innerText = "🎉 مبروك ربحت!";
+        gameOver = true;
       }
     }
   });
