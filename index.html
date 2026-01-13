@@ -17,39 +17,22 @@ body{
   width:100%;
   max-width:420px;
   height:240px;
-  margin:20px auto;
+  margin:15px auto;
   background:linear-gradient(#87ceeb,#cceeff);
   border-radius:16px;
   border:2px solid #ff2a2a;
   position:relative;
   overflow:hidden;
 }
-
-/* خلفية */
-.cloud{
-  position:absolute;
-  top:30px;
-  width:60px;
-  height:25px;
-  background:#fff;
-  border-radius:50px;
-  opacity:0.8;
-}
-
-/* الأرض */
 #ground{
   position:absolute;
   bottom:0;
   width:200%;
   height:35px;
   background:repeating-linear-gradient(
-    90deg,
-    #4b5320 0 30px,
-    #5f6f1f 30px 60px
+    90deg,#4b5320 0 30px,#5f6f1f 30px 60px
   );
 }
-
-/* اللاعب */
 #player{
   position:absolute;
   left:50px;
@@ -59,24 +42,15 @@ body{
   background:radial-gradient(circle at 30% 30%,#00ffcc,#008080);
   border-radius:50%;
 }
-
-/* تأثير القفز */
-.jump-effect{
+.cloud{
   position:absolute;
-  bottom:35px;
-  left:50px;
-  width:20px;
-  height:10px;
-  background:rgba(255,255,255,0.6);
-  border-radius:50%;
-  animation: puff 0.4s ease-out forwards;
+  top:30px;
+  width:60px;
+  height:25px;
+  background:#fff;
+  border-radius:50px;
+  opacity:.8;
 }
-@keyframes puff{
-  from{opacity:1; transform:scale(1);}
-  to{opacity:0; transform:scale(2);}
-}
-
-/* العوائق */
 .obstacle{
   position:absolute;
   bottom:35px;
@@ -85,29 +59,29 @@ body{
   background:linear-gradient(#ff5555,#aa0000);
   border-radius:8px;
 }
-
-/* الأزرار */
-button{
-  margin:8px;
-  padding:12px 28px;
-  font-size:16px;
-  background:#ff2a2a;
-  color:white;
+button,input{
+  padding:10px 20px;
+  margin:5px;
   border:none;
-  border-radius:10px;
+  border-radius:8px;
+  font-size:15px;
 }
-
-#msg{
-  margin-top:10px;
-  font-size:18px;
+button{background:#ff2a2a;color:white}
+#panel{
+  background:#111;
+  padding:10px;
+  border-radius:12px;
+  max-width:420px;
+  margin:auto;
 }
+#msg{margin-top:8px;font-size:18px}
 </style>
 </head>
 
 <body>
 
 <h2>🏃‍♂️ اركض واربح</h2>
-<p>المسافة: <span id="score">0</span></p>
+<p>المسافة: <span id="score">0</span> | المحاولات: <span id="tries">3</span></p>
 
 <div id="game">
   <div class="cloud" style="left:300px"></div>
@@ -116,75 +90,104 @@ button{
   <div id="player"></div>
 </div>
 
-<button onclick="jump()">قفز</button>
-<button onclick="restart()">إعادة اللعب</button>
+<div id="panel">
+  <button onclick="jump()">قفز</button>
+  <button onclick="restart()">إعادة اللعب</button>
+  <br>
+  <input id="code" placeholder="كود الشحن">
+  <button onclick="charge()">شحن محاولات</button>
+</div>
 
 <div id="msg"></div>
 
 <script>
-const game = document.getElementById("game");
-const player = document.getElementById("player");
-const ground = document.getElementById("ground");
-const clouds = document.querySelectorAll(".cloud");
-const scoreEl = document.getElementById("score");
-const msg = document.getElementById("msg");
-
-let y=0, v=0;
-let gravity=0.8;
-let jumping=false;
-
-let speed=4;
-let score=0;
-let gameOver=false;
-let obstacles=[];
-
-let distance=0;
-let minDistance=220;
-
-function jump(){
-  if(jumping || gameOver) return;
-  v=13;
-  jumping=true;
-
-  // تأثير قفز
-  let puff=document.createElement("div");
-  puff.className="jump-effect";
-  game.appendChild(puff);
-  setTimeout(()=>puff.remove(),400);
+// ====== صوت ======
+const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+function beep(freq,dur){
+  let o=audioCtx.createOscillator();
+  let g=audioCtx.createGain();
+  o.frequency.value=freq;
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start();
+  g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+dur);
+  o.stop(audioCtx.currentTime+dur);
 }
 
+// ====== عناصر ======
+const game=document.getElementById("game");
+const player=document.getElementById("player");
+const ground=document.getElementById("ground");
+const clouds=document.querySelectorAll(".cloud");
+const scoreEl=document.getElementById("score");
+const triesEl=document.getElementById("tries");
+const msg=document.getElementById("msg");
+
+// ====== متغيرات ======
+let y=0,v=0,gravity=0.8,jumping=false;
+let speed=4,score=0,gameOver=false;
+let obstacles=[];
+let distance=0,minDistance=240;
+let tries=3;
+
+// ====== أكواد الشحن ======
+const codes={
+  "SHAM5":5,
+  "SHAM10":12,
+  "SHAM20":30
+};
+
+// ====== تحكم ======
+function jump(){
+  if(jumping||gameOver) return;
+  v=13; jumping=true;
+  beep(600,0.15); // صوت قفز
+}
 function restart(){
+  if(tries<=0){
+    msg.innerText="❌ لا يوجد محاولات، اشحن!";
+    return;
+  }
+  tries--;
+  triesEl.innerText=tries;
   obstacles.forEach(o=>o.remove());
   obstacles=[];
-  score=0;
-  speed=4;
-  y=0; v=0;
-  gameOver=false;
+  score=0; speed=4; y=0; v=0;
+  distance=0; gameOver=false;
   msg.innerText="";
   scoreEl.innerText=0;
 }
+function charge(){
+  let c=document.getElementById("code").value.trim();
+  if(codes[c]){
+    tries+=codes[c];
+    triesEl.innerText=tries;
+    msg.innerText="✅ تم شحن "+codes[c]+" محاولة";
+    delete codes[c];
+  }else{
+    msg.innerText="❌ كود غير صحيح";
+  }
+}
 
+// ====== لوب اللعبة ======
 setInterval(()=>{
   if(gameOver) return;
 
-  // اللاعب
-  v-=gravity;
-  y+=v;
+  // لاعب
+  v-=gravity; y+=v;
   if(y<=0){y=0;v=0;jumping=false;}
   player.style.bottom=(35+y)+"px";
 
-  // الأرض
+  // أرض
   ground.style.left=(ground.offsetLeft-speed)+"px";
-  if(ground.offsetLeft<=-game.offsetWidth)
-    ground.style.left="0px";
+  if(ground.offsetLeft<=-game.offsetWidth) ground.style.left="0px";
 
-  // الغيوم
+  // غيوم
   clouds.forEach(c=>{
     c.style.left=(c.offsetLeft-speed*0.3)+"px";
     if(c.offsetLeft<-80) c.style.left=game.offsetWidth+"px";
   });
 
-  // مسافة
+  // توليد عوائق
   distance+=speed;
   if(distance>minDistance){
     let o=document.createElement("div");
@@ -193,24 +196,29 @@ setInterval(()=>{
     game.appendChild(o);
     obstacles.push(o);
     distance=0;
-    minDistance=200+Math.random()*120;
+    minDistance=200+Math.random()*140;
   }
 
-  // العوائق
+  // حركة + تصادم
   obstacles.forEach((o,i)=>{
     o.style.right=(parseInt(o.style.right)+speed)+"px";
     let r1=player.getBoundingClientRect();
     let r2=o.getBoundingClientRect();
     if(!(r1.right<r2.left||r1.left>r2.right||r1.bottom<r2.top||r1.top>r2.bottom)){
+      beep(200,0.3); // صوت اصطدام
       msg.innerText="❌ خسرت!";
       gameOver=true;
     }
     if(o.offsetLeft<-60){
       o.remove(); obstacles.splice(i,1);
-      score+=10;
-      scoreEl.innerText=score;
-      if(score%120===0) speed+=0.4;
-      if(score>=600){
+      score+=10; scoreEl.innerText=score;
+
+      // 🔥 زيادة الصعوبة تدريجيًا
+      if(score%100===0){
+        speed+=0.3;
+        gravity+=0.02;
+      }
+      if(score>=700){
         msg.innerText="🎉 مبروك ربحت!";
         gameOver=true;
       }
