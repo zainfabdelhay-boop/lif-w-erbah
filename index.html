@@ -8,45 +8,60 @@
 <style>
 body{
   margin:0;
-  background:#111;
+  background:linear-gradient(#222,#111);
   color:white;
   font-family:Arial;
   text-align:center;
 }
 #game{
   width:100%;
-  max-width:400px;
-  height:200px;
-  background:#222;
+  max-width:420px;
+  height:220px;
+  background:#333;
   margin:20px auto;
   position:relative;
   overflow:hidden;
+  border-radius:15px;
   border:2px solid red;
 }
-#player{
-  width:30px;
+#ground{
+  position:absolute;
+  bottom:0;
+  width:200%;
   height:30px;
-  background:gold;
-  position:absolute;
-  bottom:0;
-  left:30px;
+  background:repeating-linear-gradient(
+    90deg,
+    #444 0 20px,
+    #555 20px 40px
+  );
 }
-#obstacle{
-  width:20px;
-  height:40px;
-  background:red;
+#player{
+  width:32px;
+  height:32px;
+  background:radial-gradient(circle at 30% 30%, #7CFC00, #006400);
+  border-radius:50%;
   position:absolute;
-  bottom:0;
-  right:-20px;
+  bottom:30px;
+  left:40px;
+}
+.obstacle{
+  width:22px;
+  height:45px;
+  background:linear-gradient(#ff4444,#aa0000);
+  position:absolute;
+  bottom:30px;
+  border-radius:6px;
 }
 button{
-  padding:10px 20px;
+  padding:10px 25px;
   font-size:16px;
   background:red;
   color:white;
   border:none;
-  border-radius:6px;
+  border-radius:8px;
+  margin-top:10px;
 }
+#msg{margin-top:10px;font-size:18px}
 </style>
 </head>
 
@@ -56,65 +71,90 @@ button{
 <p>المسافة: <span id="score">0</span></p>
 
 <div id="game">
+  <div id="ground"></div>
   <div id="player"></div>
-  <div id="obstacle"></div>
 </div>
 
 <button onclick="jump()">قفز</button>
 <div id="msg"></div>
 
 <script>
-let player = document.getElementById("player");
-let obstacle = document.getElementById("obstacle");
-let scoreEl = document.getElementById("score");
-let msg = document.getElementById("msg");
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const ground = document.getElementById("ground");
+const scoreEl = document.getElementById("score");
+const msg = document.getElementById("msg");
 
+let y = 0;
+let velocity = 0;
+let gravity = 0.8;
 let jumping = false;
+
+let speed = 4;
 let score = 0;
 let gameOver = false;
 
-// حركة العائق
-let obstacleInterval = setInterval(()=>{
-  if(gameOver) return;
-  let x = obstacle.offsetLeft - 5;
-  obstacle.style.left = x + "px";
-  if(x < -20){
-    obstacle.style.left = "100%";
-    score += 10;
-    scoreEl.innerText = score;
-    if(score >= 500){
-      msg.innerText = "🎉 مبروك ربحت!";
-      gameOver = true;
-    }
-  }
-
-  // تصادم
-  if(x < 60 && x > 30 && !jumping){
-    msg.innerText = "❌ خسرت!";
-    gameOver = true;
-  }
-},50);
+let obstacles = [];
 
 function jump(){
   if(jumping || gameOver) return;
+  velocity = 12;
   jumping = true;
-  let up = 0;
-  let jumpUp = setInterval(()=>{
-    if(up >= 60){
-      clearInterval(jumpUp);
-      let down = setInterval(()=>{
-        if(up <= 0){
-          clearInterval(down);
-          jumping = false;
-        }
-        up -= 5;
-        player.style.bottom = up + "px";
-      },20);
-    }
-    up += 5;
-    player.style.bottom = up + "px";
-  },20);
 }
+
+// تحديث اللعبة
+setInterval(()=>{
+  if(gameOver) return;
+
+  // فيزياء القفز
+  velocity -= gravity;
+  y += velocity;
+  if(y <= 0){
+    y = 0;
+    velocity = 0;
+    jumping = false;
+  }
+  player.style.bottom = (30 + y) + "px";
+
+  // حركة الأرض
+  ground.style.left = (ground.offsetLeft - speed) + "px";
+  if(ground.offsetLeft <= -game.offsetWidth){
+    ground.style.left = "0px";
+  }
+
+  // إضافة عوائق
+  if(Math.random() < 0.02){
+    let obs = document.createElement("div");
+    obs.className = "obstacle";
+    obs.style.right = "-30px";
+    game.appendChild(obs);
+    obstacles.push(obs);
+  }
+
+  // تحريك العوائق
+  obstacles.forEach((obs,i)=>{
+    obs.style.right = (parseInt(obs.style.right)+speed) + "px";
+
+    let obsX = game.offsetWidth - obs.offsetLeft;
+    if(obsX > 40 && obsX < 70 && y < 30){
+      msg.innerText="❌ خسرت!";
+      gameOver = true;
+    }
+
+    if(obs.offsetLeft < -30){
+      obs.remove();
+      obstacles.splice(i,1);
+      score += 10;
+      scoreEl.innerText = score;
+      if(score % 100 === 0) speed += 0.5;
+      if(score >= 500){
+        msg.innerText="🎉 مبروك ربحت!";
+        gameOver = true;
+      }
+    }
+  });
+
+},30);
 </script>
 
 </body>
