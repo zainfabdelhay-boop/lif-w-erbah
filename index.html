@@ -8,7 +8,7 @@
 <style>
 body{
   margin:0;
-  background:linear-gradient(#1a1a1a,#000);
+  background:linear-gradient(#0f2027,#203a43,#2c5364);
   font-family:Arial;
   color:#fff;
   text-align:center;
@@ -16,14 +16,27 @@ body{
 #game{
   width:100%;
   max-width:420px;
-  height:230px;
+  height:240px;
   margin:20px auto;
-  background:linear-gradient(#3a3a3a,#2a2a2a);
+  background:linear-gradient(#87ceeb,#cceeff);
   border-radius:16px;
   border:2px solid #ff2a2a;
   position:relative;
   overflow:hidden;
 }
+
+/* خلفية */
+.cloud{
+  position:absolute;
+  top:30px;
+  width:60px;
+  height:25px;
+  background:#fff;
+  border-radius:50px;
+  opacity:0.8;
+}
+
+/* الأرض */
 #ground{
   position:absolute;
   bottom:0;
@@ -31,10 +44,12 @@ body{
   height:35px;
   background:repeating-linear-gradient(
     90deg,
-    #555 0 30px,
-    #666 30px 60px
+    #4b5320 0 30px,
+    #5f6f1f 30px 60px
   );
 }
+
+/* اللاعب */
 #player{
   position:absolute;
   left:50px;
@@ -44,6 +59,24 @@ body{
   background:radial-gradient(circle at 30% 30%,#00ffcc,#008080);
   border-radius:50%;
 }
+
+/* تأثير القفز */
+.jump-effect{
+  position:absolute;
+  bottom:35px;
+  left:50px;
+  width:20px;
+  height:10px;
+  background:rgba(255,255,255,0.6);
+  border-radius:50%;
+  animation: puff 0.4s ease-out forwards;
+}
+@keyframes puff{
+  from{opacity:1; transform:scale(1);}
+  to{opacity:0; transform:scale(2);}
+}
+
+/* العوائق */
 .obstacle{
   position:absolute;
   bottom:35px;
@@ -52,15 +85,18 @@ body{
   background:linear-gradient(#ff5555,#aa0000);
   border-radius:8px;
 }
+
+/* الأزرار */
 button{
-  margin-top:10px;
-  padding:12px 30px;
-  font-size:17px;
+  margin:8px;
+  padding:12px 28px;
+  font-size:16px;
   background:#ff2a2a;
   color:white;
   border:none;
   border-radius:10px;
 }
+
 #msg{
   margin-top:10px;
   font-size:18px;
@@ -74,84 +110,109 @@ button{
 <p>المسافة: <span id="score">0</span></p>
 
 <div id="game">
+  <div class="cloud" style="left:300px"></div>
+  <div class="cloud" style="top:60px;left:150px;width:40px"></div>
   <div id="ground"></div>
   <div id="player"></div>
 </div>
 
 <button onclick="jump()">قفز</button>
+<button onclick="restart()">إعادة اللعب</button>
+
 <div id="msg"></div>
 
 <script>
 const game = document.getElementById("game");
 const player = document.getElementById("player");
 const ground = document.getElementById("ground");
+const clouds = document.querySelectorAll(".cloud");
 const scoreEl = document.getElementById("score");
 const msg = document.getElementById("msg");
 
-let y = 0;
-let v = 0;
-let gravity = 0.8;
-let jumping = false;
+let y=0, v=0;
+let gravity=0.8;
+let jumping=false;
 
-let speed = 4;
-let score = 0;
-let gameOver = false;
-let obstacles = [];
+let speed=4;
+let score=0;
+let gameOver=false;
+let obstacles=[];
+
+let distance=0;
+let minDistance=220;
 
 function jump(){
   if(jumping || gameOver) return;
-  v = 13;
-  jumping = true;
+  v=13;
+  jumping=true;
+
+  // تأثير قفز
+  let puff=document.createElement("div");
+  puff.className="jump-effect";
+  game.appendChild(puff);
+  setTimeout(()=>puff.remove(),400);
+}
+
+function restart(){
+  obstacles.forEach(o=>o.remove());
+  obstacles=[];
+  score=0;
+  speed=4;
+  y=0; v=0;
+  gameOver=false;
+  msg.innerText="";
+  scoreEl.innerText=0;
 }
 
 setInterval(()=>{
   if(gameOver) return;
 
-  // حركة اللاعب
-  v -= gravity;
-  y += v;
-  if(y <= 0){
-    y = 0;
-    v = 0;
-    jumping = false;
-  }
-  player.style.bottom = (35 + y) + "px";
+  // اللاعب
+  v-=gravity;
+  y+=v;
+  if(y<=0){y=0;v=0;jumping=false;}
+  player.style.bottom=(35+y)+"px";
 
-  // حركة الأرض
-  ground.style.left = (ground.offsetLeft - speed) + "px";
-  if(ground.offsetLeft <= -game.offsetWidth){
-    ground.style.left = "0px";
-  }
+  // الأرض
+  ground.style.left=(ground.offsetLeft-speed)+"px";
+  if(ground.offsetLeft<=-game.offsetWidth)
+    ground.style.left="0px";
 
-  // إنشاء عوائق
-  if(Math.random() < 0.02){
-    let o = document.createElement("div");
-    o.className = "obstacle";
-    o.style.right = "-40px";
+  // الغيوم
+  clouds.forEach(c=>{
+    c.style.left=(c.offsetLeft-speed*0.3)+"px";
+    if(c.offsetLeft<-80) c.style.left=game.offsetWidth+"px";
+  });
+
+  // مسافة
+  distance+=speed;
+  if(distance>minDistance){
+    let o=document.createElement("div");
+    o.className="obstacle";
+    o.style.right="-40px";
     game.appendChild(o);
     obstacles.push(o);
+    distance=0;
+    minDistance=200+Math.random()*120;
   }
 
-  // تحريك العوائق والتصادم
+  // العوائق
   obstacles.forEach((o,i)=>{
-    o.style.right = (parseInt(o.style.right) + speed) + "px";
-
-    let r1 = player.getBoundingClientRect();
-    let r2 = o.getBoundingClientRect();
-    if(!(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom)){
-      msg.innerText = "❌ خسرت!";
-      gameOver = true;
+    o.style.right=(parseInt(o.style.right)+speed)+"px";
+    let r1=player.getBoundingClientRect();
+    let r2=o.getBoundingClientRect();
+    if(!(r1.right<r2.left||r1.left>r2.right||r1.bottom<r2.top||r1.top>r2.bottom)){
+      msg.innerText="❌ خسرت!";
+      gameOver=true;
     }
-
-    if(o.offsetLeft < -50){
-      o.remove();
-      obstacles.splice(i,1);
-      score += 10;
-      scoreEl.innerText = score;
-      if(score % 100 === 0) speed += 0.5;
-      if(score >= 600){
-        msg.innerText = "🎉 مبروك ربحت!";
-        gameOver = true;
+    if(o.offsetLeft<-60){
+      o.remove(); obstacles.splice(i,1);
+      score+=10;
+      scoreEl.innerText=score;
+      if(score%120===0) speed+=0.4;
+      if(score>=600){
+        msg.innerText="🎉 مبروك ربحت!";
+        gameOver=true;
       }
     }
   });
