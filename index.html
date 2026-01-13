@@ -2,95 +2,149 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>اركض واربح</title>
+<title>Zain Abdelhay | Neon Run</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body{
   margin:0;
-  background:#0b0f14;
+  background:#020617;
   font-family:Arial;
-  color:#fff;
+  color:#e5e7eb;
   text-align:center;
 }
+
+/* صفحة البداية */
+#startScreen{
+  position:fixed;
+  inset:0;
+  background:radial-gradient(circle at top,#020617,#000);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:10;
+}
+#startScreen h1{
+  font-size:32px;
+  color:#00ffcc;
+  text-shadow:0 0 20px #00ffcc;
+}
+#startScreen p{
+  opacity:.7;
+}
+#startScreen button{
+  margin-top:20px;
+  padding:14px 40px;
+  font-size:18px;
+  background:#00ffcc;
+  color:#000;
+  border:none;
+  border-radius:30px;
+  box-shadow:0 0 25px #00ffcc;
+}
+
+/* شارة */
 .badge{
   margin-top:10px;
   display:inline-block;
   padding:6px 14px;
   border-radius:20px;
-  background:#00ff88;
+  background:#00ffcc;
   color:#000;
   font-weight:bold;
 }
+
+/* اللعبة */
 #game{
   width:100%;
   max-width:420px;
   height:240px;
   margin:15px auto;
-  background:linear-gradient(#1f2933,#111827);
-  border-radius:16px;
-  border:2px solid #00ff88;
+  background:linear-gradient(#020617,#020617);
+  border-radius:18px;
+  border:2px solid #00ffcc;
+  box-shadow:0 0 25px #00ffcc55;
   position:relative;
   overflow:hidden;
 }
+
+/* الأرض */
 #ground{
   position:absolute;
   bottom:0;
   width:200%;
   height:35px;
   background:repeating-linear-gradient(
-    90deg,#374151 0 30px,#4b5563 30px 60px
+    90deg,#022c22 0 30px,#064e3b 30px 60px
   );
 }
+
+/* اللاعب */
 #player{
   position:absolute;
   left:50px;
   bottom:35px;
   width:34px;
   height:34px;
-  background:radial-gradient(circle at 30% 30%,#00ffcc,#00aa88);
+  background:radial-gradient(circle at 30% 30%,#00ffcc,#008080);
   border-radius:50%;
+  box-shadow:0 0 20px #00ffcc;
 }
+
+/* العوائق */
 .obstacle{
   position:absolute;
   bottom:35px;
   width:26px;
   height:42px;
-  background:linear-gradient(#ff5555,#aa0000);
+  background:linear-gradient(#ff3b3b,#7f1d1d);
   border-radius:8px;
+  box-shadow:0 0 15px #ff3b3b;
 }
+
+/* أزرار */
 button{
   padding:12px 30px;
   font-size:16px;
-  background:#00ff88;
+  background:#00ffcc;
   color:#000;
   border:none;
-  border-radius:10px;
-  margin-top:10px;
-}
-#msg{
-  margin-top:8px;
-  font-size:18px;
+  border-radius:12px;
+  margin:6px;
+  box-shadow:0 0 20px #00ffcc;
 }
 
-/* نبض القلب */
+/* نبض */
 #heartbeat{
   width:100%;
   max-width:420px;
   height:60px;
   margin:20px auto;
-  background:#020617;
+  background:#000;
   border-radius:12px;
-  border:1px solid #00ff88;
+  border:1px solid #00ffcc;
+}
+
+/* التذييل */
+footer{
+  margin-top:10px;
+  font-size:13px;
+  opacity:.6;
 }
 </style>
 </head>
 
 <body>
 
-<div class="badge">🆓 مجانية</div>
+<div id="startScreen">
+  <h1>NEON RUN</h1>
+  <p>By Zain Abdelhay</p>
+  <button onclick="startGame()">ابدأ اللعب</button>
+</div>
 
-<h2>🏃‍♂️ اركض واربح</h2>
+<div class="badge">🆓 مجانية</div>
+<h2>🏃‍♂️ Neon Run</h2>
 <p>المسافة: <span id="score">0</span></p>
 
 <div id="game">
@@ -99,29 +153,53 @@ button{
 </div>
 
 <button onclick="jump()">قفز</button>
+<button onclick="restart()">إعادة بدء</button>
 <div id="msg"></div>
 
 <canvas id="heartbeat"></canvas>
 
+<footer>© Zain Abdelhay</footer>
+
 <script>
-// ====== اللعبة ======
+/* ===== عناصر ===== */
 const game=document.getElementById("game");
 const player=document.getElementById("player");
 const ground=document.getElementById("ground");
 const scoreEl=document.getElementById("score");
 const msg=document.getElementById("msg");
+const startScreen=document.getElementById("startScreen");
 
+/* ===== متغيرات اللعبة ===== */
 let y=0,v=0,gravity=0.8,jumping=false;
-let speed=4,score=0,gameOver=false;
+let speed=4,score=0,gameOver=true;
 let obstacles=[];
 let distance=0,minDistance=240;
 
+/* ===== بدء ===== */
+function startGame(){
+  startScreen.style.display="none";
+  restart();
+}
+function restart(){
+  obstacles.forEach(o=>o.remove());
+  obstacles=[];
+  score=0;
+  speed=4;
+  y=0;v=0;
+  distance=0;
+  gameOver=false;
+  msg.innerText="";
+  scoreEl.innerText=0;
+}
+
+/* ===== قفز ===== */
 function jump(){
   if(jumping||gameOver) return;
   v=13;
   jumping=true;
 }
 
+/* ===== لوب اللعبة ===== */
 setInterval(()=>{
   if(gameOver) return;
 
@@ -149,42 +227,45 @@ setInterval(()=>{
     let r1=player.getBoundingClientRect();
     let r2=o.getBoundingClientRect();
     if(!(r1.right<r2.left||r1.left>r2.right||r1.bottom<r2.top||r1.top>r2.bottom)){
-      msg.innerText="❌ خسرت!";
+      msg.innerText="❌ انتهت اللعبة";
       gameOver=true;
     }
     if(o.offsetLeft<-60){
-      o.remove(); obstacles.splice(i,1);
+      o.remove();
+      obstacles.splice(i,1);
       score+=10;
       scoreEl.innerText=score;
-      if(score%120===0) speed+=0.3;
+      if(score%100===0) speed+=0.4;
     }
   });
 },30);
 
-// ====== نبض القلب ======
+/* ===== نبض القلب ===== */
 const canvas=document.getElementById("heartbeat");
 const ctx=canvas.getContext("2d");
 canvas.width=420;
 canvas.height=60;
+let pulse=60;
 
-let x=0;
 function heartbeat(){
-  ctx.fillStyle="#020617";
+  ctx.fillStyle="#000";
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  ctx.strokeStyle="#00ff88";
+  ctx.strokeStyle="#00ffcc";
   ctx.lineWidth=2;
   ctx.beginPath();
   ctx.moveTo(0,canvas.height/2);
 
   for(let i=0;i<canvas.width;i++){
     let y=canvas.height/2;
-    if(i%60===30){
+    if(i%pulse===pulse/2){
       y-=20;
     }
     ctx.lineTo(i,y);
   }
   ctx.stroke();
+
+  pulse=Math.max(20,60-speed*5);
   requestAnimationFrame(heartbeat);
 }
 heartbeat();
