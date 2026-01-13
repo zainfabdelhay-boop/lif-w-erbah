@@ -2,151 +2,118 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
+<title>اركض واربح</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>لف واربح</title>
-
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#b30000">
 
 <style>
 body{
-  background:#0f0f0f;
-  color:#fff;
-  font-family:Tahoma, Arial;
-  text-align:center;
   margin:0;
-  padding:0;
-}
-h1{margin-top:20px}
-#wheel{
-  width:240px;
-  height:240px;
-  border-radius:50%;
-  margin:20px auto;
-  border:8px solid #b30000;
-  background:conic-gradient(
-    gold 0deg 60deg,
-    #b30000 60deg 120deg,
-    gold 120deg 180deg,
-    #b30000 180deg 240deg,
-    gold 240deg 300deg,
-    #b30000 300deg 360deg
-  );
-  transition:transform 0.6s ease-out;
-}
-button,input{
-  padding:12px 18px;
-  margin:6px;
-  border-radius:8px;
-  border:none;
-  font-size:16px;
-}
-#spin{
-  background:#b30000;
+  background:#111;
   color:white;
-  font-size:18px;
+  font-family:Arial;
+  text-align:center;
 }
-#msg{
-  margin-top:15px;
-  font-size:18px;
-  min-height:24px;
+#game{
+  width:100%;
+  max-width:400px;
+  height:200px;
+  background:#222;
+  margin:20px auto;
+  position:relative;
+  overflow:hidden;
+  border:2px solid red;
 }
-.box{
-  background:#1a1a1a;
-  margin:20px;
-  padding:15px;
-  border-radius:10px;
+#player{
+  width:30px;
+  height:30px;
+  background:gold;
+  position:absolute;
+  bottom:0;
+  left:30px;
 }
-hr{border:1px solid #333}
+#obstacle{
+  width:20px;
+  height:40px;
+  background:red;
+  position:absolute;
+  bottom:0;
+  right:-20px;
+}
+button{
+  padding:10px 20px;
+  font-size:16px;
+  background:red;
+  color:white;
+  border:none;
+  border-radius:6px;
+}
 </style>
 </head>
 
 <body>
 
-<h1>🎡 لف واربح</h1>
-<p>عدد لفاتك: <b><span id="spins">0</span></b></p>
+<h2>🦖 اركض واربح</h2>
+<p>المسافة: <span id="score">0</span></p>
 
-<div id="wheel"></div>
-<button id="spin">لف العجلة</button>
+<div id="game">
+  <div id="player"></div>
+  <div id="obstacle"></div>
+</div>
+
+<button onclick="jump()">قفز</button>
 <div id="msg"></div>
 
-<div class="box">
-<h3>💳 شحن عبر شام كاش</h3>
-<p>حوّل المبلغ إلى الرقم:</p>
-<p><b>09XXXXXXXX</b></p>
-<p>ثم أدخل كود الشحن:</p>
-<input id="code" placeholder="أدخل كود الشحن">
-<br>
-<button onclick="redeem()">تأكيد الشحن</button>
-</div>
-
-<div class="box">
-<h4>📌 التعليمات</h4>
-<p>🔹 لفة مجانية عند أول دخول</p>
-<p>🔹 عند انتهاء اللفات يجب الشحن</p>
-<p>🔹 اللعبة للتسلية وفرصة حظ</p>
-</div>
-
 <script>
-// تحميل اللفات المحفوظة
-let spins = localStorage.getItem("spins")
-  ? parseInt(localStorage.getItem("spins"))
-  : 1;
+let player = document.getElementById("player");
+let obstacle = document.getElementById("obstacle");
+let scoreEl = document.getElementById("score");
+let msg = document.getElementById("msg");
 
-const codes = {
-  "SHAM10":5,
-  "SHAM20":12,
-  "SHAM50":40
-};
+let jumping = false;
+let score = 0;
+let gameOver = false;
 
-update();
-
-document.getElementById("spin").onclick = ()=>{
-  if(spins <= 0){
-    document.getElementById("msg").innerText="❌ انتهت اللفات، الرجاء الشحن";
-    return;
-  }
-
-  spins--;
-  save();
-
-  let deg = Math.floor(Math.random()*360);
-  document.getElementById("wheel").style.transform =
-    "rotate("+(deg+720)+"deg)";
-
-  setTimeout(()=>{
-    if(deg % 2 === 1){
-      spins++;
-      document.getElementById("msg").innerText="🎉 ربحت لفة إضافية!";
-    }else{
-      document.getElementById("msg").innerText="❌ حظ أوفر";
+// حركة العائق
+let obstacleInterval = setInterval(()=>{
+  if(gameOver) return;
+  let x = obstacle.offsetLeft - 5;
+  obstacle.style.left = x + "px";
+  if(x < -20){
+    obstacle.style.left = "100%";
+    score += 10;
+    scoreEl.innerText = score;
+    if(score >= 500){
+      msg.innerText = "🎉 مبروك ربحت!";
+      gameOver = true;
     }
-    save();
-  },600);
-};
-
-function redeem(){
-  let c = document.getElementById("code").value.trim();
-  if(codes[c]){
-    spins += codes[c];
-    document.getElementById("msg").innerText =
-      "✅ تم شحن "+codes[c]+" لفات";
-    delete codes[c];
-    document.getElementById("code").value="";
-    save();
-  }else{
-    document.getElementById("msg").innerText="❌ كود غير صحيح";
   }
-}
 
-function save(){
-  localStorage.setItem("spins", spins);
-  update();
-}
+  // تصادم
+  if(x < 60 && x > 30 && !jumping){
+    msg.innerText = "❌ خسرت!";
+    gameOver = true;
+  }
+},50);
 
-function update(){
-  document.getElementById("spins").innerText = spins;
+function jump(){
+  if(jumping || gameOver) return;
+  jumping = true;
+  let up = 0;
+  let jumpUp = setInterval(()=>{
+    if(up >= 60){
+      clearInterval(jumpUp);
+      let down = setInterval(()=>{
+        if(up <= 0){
+          clearInterval(down);
+          jumping = false;
+        }
+        up -= 5;
+        player.style.bottom = up + "px";
+      },20);
+    }
+    up += 5;
+    player.style.bottom = up + "px";
+  },20);
 }
 </script>
 
