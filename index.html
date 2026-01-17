@@ -13,7 +13,6 @@ body{
   font-family:Arial;
   text-align:center;
 }
-
 h2{margin:10px}
 
 #gameContainer{
@@ -27,83 +26,43 @@ h2{margin:10px}
   border-radius:16px;
   box-shadow:0 0 25px #00ffff55;
 }
-
-/* خلفية متحركة */
 .bg{
   position:absolute;
   inset:0;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      #0f1c2d 0px,
-      #0f1c2d 40px,
-      #08111c 40px,
-      #08111c 80px
-    );
+  background:repeating-linear-gradient(
+    90deg,#0f1c2d 0px,#0f1c2d 40px,#08111c 40px,#08111c 80px);
   opacity:0.4;
 }
-
-/* الكرة */
 #player{
-  width:40px;
-  height:40px;
+  width:40px;height:40px;
   background:radial-gradient(circle at 30% 30%, #7fffff, #00cccc);
-  position:absolute;
-  bottom:30px;
-  left:70px;
+  position:absolute;bottom:30px;left:70px;
   border-radius:50%;
   box-shadow:0 0 15px #00ffff;
 }
-
-/* عقبات بسيطة */
 .obstacle{
   position:absolute;
-  bottom:30px;
-  width:38px;
-  height:55px;
-  background:#ff3b3b;
-  border-radius:6px;
-  box-shadow:0 0 10px #ff3b3b66;
+  bottom:30px;width:38px;height:55px;
+  background:#ff3b3b;border-radius:6px;
 }
-
 #hud{
-  position:absolute;
-  top:10px;
-  left:0;
-  right:0;
-  display:flex;
-  justify-content:space-around;
-  font-size:16px;
+  position:absolute;top:10px;left:0;right:0;
+  display:flex;justify-content:space-around;
   z-index:5;
 }
-
 .screen{
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,0.88);
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
+  position:absolute;inset:0;
+  background:rgba(0,0,0,0.9);
+  display:flex;flex-direction:column;
+  justify-content:center;align-items:center;
   z-index:10;
 }
-
 button{
-  padding:12px 28px;
-  font-size:18px;
-  border:none;
-  border-radius:10px;
-  background:#00ffff;
-  cursor:pointer;
-  margin-top:10px;
+  padding:12px 28px;font-size:18px;
+  border:none;border-radius:10px;
+  background:#00ffff;cursor:pointer;
 }
-
-.logo{
-  font-size:26px;
-  margin-bottom:20px;
-  color:#00ffff;
-  text-shadow:0 0 10px #00ffff;
-}
+.adBox{margin:15px 0;}
 </style>
 </head>
 
@@ -121,158 +80,100 @@ button{
 
   <div id="player"></div>
 
+  <!-- START SCREEN -->
   <div id="startScreen" class="screen">
-    <div class="logo">⚡ Zain Abdelhay ⚡</div>
+    <h1>⚡ Zain Abdelhay ⚡</h1>
+
+    <!-- إعلان 1 -->
+    <div class="adBox">
+      <script>
+        atOptions = {
+          'key' : '82acc990763bc92cb6c09d0949568ffc',
+          'format' : 'iframe',
+          'height' : 250,
+          'width' : 300,
+          'params' : {}
+        };
+      </script>
+      <script src="https://www.highperformanceformat.com/82acc990763bc92cb6c09d0949568ffc/invoke.js"></script>
+    </div>
+
     <button onclick="startGame()">Start Game</button>
   </div>
 
+  <!-- GAME OVER -->
   <div id="gameOverScreen" class="screen" style="display:none;">
     <h1>Game Over</h1>
     <p id="finalScore"></p>
+
+    <!-- إعلان 2 -->
+    <div class="adBox">
+      <script src="https://pl28472784.effectivegatecpm.com/41/98/fb/4198fbcafe6a6b21b4429168fe916391.js"></script>
+    </div>
+
     <button onclick="startGame()">Play Again</button>
   </div>
 </div>
 
 <script>
-const player = document.getElementById("player");
-const game = document.getElementById("gameContainer");
-const scoreEl = document.getElementById("score");
-const bestEl = document.getElementById("best");
-const startScreen = document.getElementById("startScreen");
-const gameOverScreen = document.getElementById("gameOverScreen");
-const finalScore = document.getElementById("finalScore");
-const bg = document.getElementById("bg");
+const player=document.getElementById("player");
+const game=document.getElementById("gameContainer");
+const scoreEl=document.getElementById("score");
+const bestEl=document.getElementById("best");
+const startScreen=document.getElementById("startScreen");
+const gameOverScreen=document.getElementById("gameOverScreen");
+const finalScore=document.getElementById("finalScore");
+const bg=document.getElementById("bg");
 
-let velocity = 0;
-let gravity = 0.6;
-let jumpPower = 13;
-let ground = 30;
-
-let obstacles = [];
-let speed = 3;
-let score = 0;
-let best = localStorage.getItem("best") || 0;
-bestEl.innerText = best;
-
-let running = false;
-let loop;
-let spawnTimer = 0;
-let distanceTimer = 0;
-let rotation = 0;
+let velocity=0,gravity=0.6,jumpPower=13,ground=30;
+let obstacles=[],speed=3,score=0;
+let best=localStorage.getItem("best")||0;
+bestEl.innerText=best;
+let running=false,loop,spawnTimer=0,dist=0,rot=0;
 
 function startGame(){
-  obstacles.forEach(o=>o.remove());
-  obstacles = [];
-  score = 0;
-  speed = 3;
-  velocity = 0;
-  rotation = 0;
-  player.style.bottom = ground+"px";
-  player.style.transform = "rotate(0deg)";
-  spawnTimer = 0;
-  distanceTimer = 0;
-
-  scoreEl.innerText = 0;
+  obstacles.forEach(o=>o.remove());obstacles=[];
+  score=0;speed=3;velocity=0;rot=0;
+  player.style.bottom=ground+"px";
+  scoreEl.innerText=0;
   startScreen.style.display="none";
   gameOverScreen.style.display="none";
-
-  running = true;
-  loop = setInterval(update,20);
+  running=true;
+  loop=setInterval(update,20);
 }
-
 function update(){
-  /* خلفية */
-  bg.style.backgroundPositionX = (Date.now()/25)%80+"px";
-
-  /* فيزياء القفز */
-  velocity -= gravity;
-  let bottom = parseFloat(player.style.bottom);
-  bottom += velocity;
-  if(bottom<=ground){
-    bottom=ground;
-    velocity=0;
-  }
-  player.style.bottom = bottom+"px";
-
-  /* دوران الكرة */
-  if(running && bottom === ground){
-    rotation += speed * 2;
-    player.style.transform = `rotate(${rotation}deg)`;
-  }
-
-  /* السكور يزيد مع الركض */
-  distanceTimer++;
-  if(distanceTimer % 5 === 0){
-    score++;
-    scoreEl.innerText = score;
-
-    if(score % 100 === 0) speed += 0.4;
-  }
-
-  /* توليد العقبات (مسافة منطقية) */
+  bg.style.backgroundPositionX=(Date.now()/25)%80+"px";
+  velocity-=gravity;
+  let b=parseFloat(player.style.bottom)+velocity;
+  if(b<=ground){b=ground;velocity=0;}
+  player.style.bottom=b+"px";
+  if(b===ground){rot+=speed*2;player.style.transform=`rotate(${rot}deg)`;}
+  dist++; if(dist%5===0){score++;scoreEl.innerText=score;if(score%100===0)speed+=0.4;}
   spawnTimer++;
-  if(spawnTimer > 80 + Math.random()*50){
-    spawnObstacle();
-    spawnTimer = 0;
-  }
-
-  /* تحريك العقبات */
+  if(spawnTimer>80+Math.random()*50){spawn();spawnTimer=0;}
   obstacles.forEach((o,i)=>{
-    let right = parseFloat(o.style.right);
-    right += speed;
-    o.style.right = right+"px";
-
-    if(right > 480){
-      o.remove();
-      obstacles.splice(i,1);
-    }
-
-    checkCollision(o);
+    let r=parseFloat(o.style.right)+speed;
+    o.style.right=r+"px";
+    if(r>480){o.remove();obstacles.splice(i,1);}
+    if(collide(o)) endGame();
   });
 }
-
-function spawnObstacle(){
-  const o = document.createElement("div");
-  o.className = "obstacle";
-  o.style.right = "-60px";
-  game.appendChild(o);
-  obstacles.push(o);
+function spawn(){
+  let o=document.createElement("div");
+  o.className="obstacle";o.style.right="-60px";
+  game.appendChild(o);obstacles.push(o);
 }
-
-function jump(){
-  if(velocity===0 && running){
-    velocity = jumpPower;
-  }
+function jump(){if(velocity===0&&running)velocity=jumpPower;}
+function collide(o){
+  let p=player.getBoundingClientRect(),ob=o.getBoundingClientRect();
+  return p.right>ob.left+6&&p.left<ob.right-6&&p.bottom>ob.top+6;
 }
-
-function checkCollision(o){
-  const p = player.getBoundingClientRect();
-  const ob = o.getBoundingClientRect();
-
-  if(
-    p.right > ob.left+6 &&
-    p.left < ob.right-6 &&
-    p.bottom > ob.top+6
-  ){
-    endGame();
-  }
-}
-
 function endGame(){
-  clearInterval(loop);
-  running=false;
-
-  if(score>best){
-    best=score;
-    localStorage.setItem("best",best);
-    bestEl.innerText = best;
-  }
-
-  finalScore.innerText = "Score: "+score;
-  if(navigator.vibrate) navigator.vibrate(120);
+  clearInterval(loop);running=false;
+  if(score>best){best=score;localStorage.setItem("best",best);bestEl.innerText=best;}
+  finalScore.innerText="Score: "+score;
   gameOverScreen.style.display="flex";
 }
-
 document.addEventListener("touchstart",jump);
 document.addEventListener("mousedown",jump);
 </script>
