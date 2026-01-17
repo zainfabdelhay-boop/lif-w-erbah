@@ -28,7 +28,7 @@ h2{margin:10px}
   box-shadow:0 0 25px #00ffff55;
 }
 
-/* خلفية تتحرك */
+/* خلفية متحركة */
 .bg{
   position:absolute;
   inset:0;
@@ -43,26 +43,28 @@ h2{margin:10px}
   opacity:0.4;
 }
 
+/* الكرة */
 #player{
-  width:42px;
-  height:42px;
-  background:#00ffff;
+  width:40px;
+  height:40px;
+  background:radial-gradient(circle at 30% 30%, #7fffff, #00cccc);
   position:absolute;
   bottom:30px;
-  left:60px;
-  border-radius:10px;
+  left:70px;
+  border-radius:50%;
   box-shadow:0 0 15px #00ffff;
 }
 
+/* عقبات بسيطة */
 .obstacle{
   position:absolute;
   bottom:30px;
+  width:38px;
+  height:55px;
   background:#ff3b3b;
   border-radius:6px;
+  box-shadow:0 0 10px #ff3b3b66;
 }
-
-.big{width:46px;height:60px}
-.small{width:34px;height:45px}
 
 #hud{
   position:absolute;
@@ -97,7 +99,7 @@ button{
 }
 
 .logo{
-  font-size:28px;
+  font-size:26px;
   margin-bottom:20px;
   color:#00ffff;
   text-shadow:0 0 10px #00ffff;
@@ -155,6 +157,8 @@ bestEl.innerText = best;
 let running = false;
 let loop;
 let spawnTimer = 0;
+let distanceTimer = 0;
+let rotation = 0;
 
 function startGame(){
   obstacles.forEach(o=>o.remove());
@@ -162,8 +166,11 @@ function startGame(){
   score = 0;
   speed = 3;
   velocity = 0;
+  rotation = 0;
   player.style.bottom = ground+"px";
+  player.style.transform = "rotate(0deg)";
   spawnTimer = 0;
+  distanceTimer = 0;
 
   scoreEl.innerText = 0;
   startScreen.style.display="none";
@@ -174,24 +181,42 @@ function startGame(){
 }
 
 function update(){
-  // خلفية
-  bg.style.backgroundPositionX = (Date.now()/20)%80+"px";
+  /* خلفية */
+  bg.style.backgroundPositionX = (Date.now()/25)%80+"px";
 
-  // فيزياء
+  /* فيزياء القفز */
   velocity -= gravity;
   let bottom = parseFloat(player.style.bottom);
   bottom += velocity;
-  if(bottom<=ground){bottom=ground;velocity=0;}
+  if(bottom<=ground){
+    bottom=ground;
+    velocity=0;
+  }
   player.style.bottom = bottom+"px";
 
-  // توليد عقبات (مسافة منطقية)
+  /* دوران الكرة */
+  if(running && bottom === ground){
+    rotation += speed * 2;
+    player.style.transform = `rotate(${rotation}deg)`;
+  }
+
+  /* السكور يزيد مع الركض */
+  distanceTimer++;
+  if(distanceTimer % 5 === 0){
+    score++;
+    scoreEl.innerText = score;
+
+    if(score % 100 === 0) speed += 0.4;
+  }
+
+  /* توليد العقبات (مسافة منطقية) */
   spawnTimer++;
-  if(spawnTimer > 90 + Math.random()*60){
+  if(spawnTimer > 80 + Math.random()*50){
     spawnObstacle();
     spawnTimer = 0;
   }
 
-  // تحريك العقبات
+  /* تحريك العقبات */
   obstacles.forEach((o,i)=>{
     let right = parseFloat(o.style.right);
     right += speed;
@@ -200,10 +225,6 @@ function update(){
     if(right > 480){
       o.remove();
       obstacles.splice(i,1);
-      score += 5;
-      scoreEl.innerText = score;
-
-      if(score % 50 === 0) speed += 0.4;
     }
 
     checkCollision(o);
@@ -212,7 +233,7 @@ function update(){
 
 function spawnObstacle(){
   const o = document.createElement("div");
-  o.className = "obstacle " + (Math.random()>0.5?"big":"small");
+  o.className = "obstacle";
   o.style.right = "-60px";
   game.appendChild(o);
   obstacles.push(o);
@@ -229,9 +250,9 @@ function checkCollision(o){
   const ob = o.getBoundingClientRect();
 
   if(
-    p.right > ob.left+5 &&
-    p.left < ob.right-5 &&
-    p.bottom > ob.top+5
+    p.right > ob.left+6 &&
+    p.left < ob.right-6 &&
+    p.bottom > ob.top+6
   ){
     endGame();
   }
@@ -248,9 +269,7 @@ function endGame(){
   }
 
   finalScore.innerText = "Score: "+score;
-
-  if(navigator.vibrate) navigator.vibrate(150);
-
+  if(navigator.vibrate) navigator.vibrate(120);
   gameOverScreen.style.display="flex";
 }
 
