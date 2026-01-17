@@ -6,190 +6,256 @@
 <title>Life & Erbah</title>
 
 <style>
-body {
-  margin: 0;
-  background: #111;
-  color: white;
-  font-family: Arial;
-  text-align: center;
+body{
+  margin:0;
+  background:#0b0f14;
+  color:#fff;
+  font-family:Arial;
+  text-align:center;
 }
 
-#gameContainer {
-  width: 100%;
-  max-width: 420px;
-  height: 500px;
-  margin: 20px auto;
-  background: linear-gradient(#222, #111);
-  position: relative;
-  overflow: hidden;
-  border-radius: 12px;
+h2{margin:10px}
+
+#gameContainer{
+  width:100%;
+  max-width:420px;
+  height:520px;
+  margin:10px auto;
+  background:linear-gradient(#101820,#05070a);
+  position:relative;
+  overflow:hidden;
+  border-radius:16px;
+  box-shadow:0 0 25px #00ffff55;
 }
 
-#player {
-  width: 42px;
-  height: 42px;
-  background: cyan;
-  position: absolute;
-  bottom: 25px;
-  left: 60px;
-  border-radius: 10px;
+/* خلفية تتحرك */
+.bg{
+  position:absolute;
+  inset:0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #0f1c2d 0px,
+      #0f1c2d 40px,
+      #08111c 40px,
+      #08111c 80px
+    );
+  opacity:0.4;
 }
 
-.obstacle {
-  width: 40px;
-  height: 55px;
-  background: red;
-  position: absolute;
-  bottom: 25px;
-  right: -60px;
-  border-radius: 6px;
+#player{
+  width:42px;
+  height:42px;
+  background:#00ffff;
+  position:absolute;
+  bottom:30px;
+  left:60px;
+  border-radius:10px;
+  box-shadow:0 0 15px #00ffff;
 }
 
-.screen {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
+.obstacle{
+  position:absolute;
+  bottom:30px;
+  background:#ff3b3b;
+  border-radius:6px;
 }
 
-button {
-  padding: 12px 26px;
-  font-size: 18px;
-  background: cyan;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
+.big{width:46px;height:60px}
+.small{width:34px;height:45px}
+
+#hud{
+  position:absolute;
+  top:10px;
+  left:0;
+  right:0;
+  display:flex;
+  justify-content:space-around;
+  font-size:16px;
+  z-index:5;
 }
 
-#score {
-  font-size: 20px;
+.screen{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.88);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:10;
+}
+
+button{
+  padding:12px 28px;
+  font-size:18px;
+  border:none;
+  border-radius:10px;
+  background:#00ffff;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+.logo{
+  font-size:28px;
+  margin-bottom:20px;
+  color:#00ffff;
+  text-shadow:0 0 10px #00ffff;
 }
 </style>
 </head>
 
 <body>
 
-<h2>Life & Erbah 🎮</h2>
-<div id="score">Score: 0</div>
+<h2>Life & Erbah</h2>
 
 <div id="gameContainer">
+  <div class="bg" id="bg"></div>
+
+  <div id="hud">
+    <div>Score: <span id="score">0</span></div>
+    <div>Best: <span id="best">0</span></div>
+  </div>
+
   <div id="player"></div>
 
   <div id="startScreen" class="screen">
-    <h1>Start Game</h1>
-    <button onclick="startGame()">ابدأ</button>
+    <div class="logo">⚡ Zain Abdelhay ⚡</div>
+    <button onclick="startGame()">Start Game</button>
   </div>
 
   <div id="gameOverScreen" class="screen" style="display:none;">
     <h1>Game Over</h1>
     <p id="finalScore"></p>
-    <button onclick="startGame()">إعادة</button>
+    <button onclick="startGame()">Play Again</button>
   </div>
 </div>
 
 <script>
 const player = document.getElementById("player");
 const game = document.getElementById("gameContainer");
-const scoreText = document.getElementById("score");
+const scoreEl = document.getElementById("score");
+const bestEl = document.getElementById("best");
 const startScreen = document.getElementById("startScreen");
 const gameOverScreen = document.getElementById("gameOverScreen");
 const finalScore = document.getElementById("finalScore");
+const bg = document.getElementById("bg");
 
 let velocity = 0;
 let gravity = 0.6;
 let jumpPower = 13;
-let ground = 25;
-let isRunning = false;
+let ground = 30;
 
-let obstacle;
-let obstacleSpeed = 3;
+let obstacles = [];
+let speed = 3;
 let score = 0;
+let best = localStorage.getItem("best") || 0;
+bestEl.innerText = best;
+
+let running = false;
 let loop;
+let spawnTimer = 0;
 
-function startGame() {
+function startGame(){
+  obstacles.forEach(o=>o.remove());
+  obstacles = [];
   score = 0;
-  obstacleSpeed = 3;
+  speed = 3;
   velocity = 0;
-  player.style.bottom = ground + "px";
+  player.style.bottom = ground+"px";
+  spawnTimer = 0;
 
-  startScreen.style.display = "none";
-  gameOverScreen.style.display = "none";
+  scoreEl.innerText = 0;
+  startScreen.style.display="none";
+  gameOverScreen.style.display="none";
 
-  if (obstacle) obstacle.remove();
-  obstacle = document.createElement("div");
-  obstacle.className = "obstacle";
-  game.appendChild(obstacle);
-  obstacle.style.right = "-200px";
-
-  isRunning = true;
-  loop = setInterval(update, 20);
+  running = true;
+  loop = setInterval(update,20);
 }
 
-function update() {
-  // فيزياء القفز
+function update(){
+  // خلفية
+  bg.style.backgroundPositionX = (Date.now()/20)%80+"px";
+
+  // فيزياء
   velocity -= gravity;
   let bottom = parseFloat(player.style.bottom);
   bottom += velocity;
+  if(bottom<=ground){bottom=ground;velocity=0;}
+  player.style.bottom = bottom+"px";
 
-  if (bottom <= ground) {
-    bottom = ground;
-    velocity = 0;
+  // توليد عقبات (مسافة منطقية)
+  spawnTimer++;
+  if(spawnTimer > 90 + Math.random()*60){
+    spawnObstacle();
+    spawnTimer = 0;
   }
 
-  player.style.bottom = bottom + "px";
+  // تحريك العقبات
+  obstacles.forEach((o,i)=>{
+    let right = parseFloat(o.style.right);
+    right += speed;
+    o.style.right = right+"px";
 
-  // تحريك العقبة
-  let right = parseFloat(obstacle.style.right);
-  right += obstacleSpeed;
+    if(right > 480){
+      o.remove();
+      obstacles.splice(i,1);
+      score += 5;
+      scoreEl.innerText = score;
 
-  if (right > 500) {
-    right = -200;
-    score += 10;
+      if(score % 50 === 0) speed += 0.4;
+    }
 
-    // تصعيد الصعوبة تدريجياً
-    if (score % 50 === 0) obstacleSpeed += 0.4;
-  }
-
-  obstacle.style.right = right + "px";
-
-  scoreText.innerText = "Score: " + score;
-
-  checkCollision();
+    checkCollision(o);
+  });
 }
 
-function jump() {
-  if (velocity === 0 && isRunning) {
+function spawnObstacle(){
+  const o = document.createElement("div");
+  o.className = "obstacle " + (Math.random()>0.5?"big":"small");
+  o.style.right = "-60px";
+  game.appendChild(o);
+  obstacles.push(o);
+}
+
+function jump(){
+  if(velocity===0 && running){
     velocity = jumpPower;
   }
 }
 
-function checkCollision() {
+function checkCollision(o){
   const p = player.getBoundingClientRect();
-  const o = obstacle.getBoundingClientRect();
+  const ob = o.getBoundingClientRect();
 
-  if (
-    p.right > o.left + 5 &&
-    p.left < o.right - 5 &&
-    p.bottom > o.top + 5
-  ) {
+  if(
+    p.right > ob.left+5 &&
+    p.left < ob.right-5 &&
+    p.bottom > ob.top+5
+  ){
     endGame();
   }
 }
 
-function endGame() {
+function endGame(){
   clearInterval(loop);
-  isRunning = false;
-  finalScore.innerText = "Score: " + score;
-  gameOverScreen.style.display = "flex";
+  running=false;
+
+  if(score>best){
+    best=score;
+    localStorage.setItem("best",best);
+    bestEl.innerText = best;
+  }
+
+  finalScore.innerText = "Score: "+score;
+
+  if(navigator.vibrate) navigator.vibrate(150);
+
+  gameOverScreen.style.display="flex";
 }
 
-// لمس + ماوس
-document.addEventListener("touchstart", jump);
-document.addEventListener("mousedown", jump);
+document.addEventListener("touchstart",jump);
+document.addEventListener("mousedown",jump);
 </script>
 
 </body>
