@@ -6,207 +6,188 @@
 <title>Life & Erbah</title>
 
 <style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #111;
-    color: #fff;
-    text-align: center;
-  }
+body {
+  margin: 0;
+  background: #111;
+  color: white;
+  font-family: Arial;
+  text-align: center;
+}
 
-  #gameContainer {
-    width: 100%;
-    max-width: 400px;
-    height: 500px;
-    background: #222;
-    margin: 20px auto;
-    position: relative;
-    overflow: hidden;
-    border-radius: 10px;
-  }
+#gameContainer {
+  width: 100%;
+  max-width: 420px;
+  height: 500px;
+  margin: 20px auto;
+  background: linear-gradient(#222, #111);
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
 
-  #player {
-    width: 40px;
-    height: 40px;
-    background: red;
-    position: absolute;
-    bottom: 20px;
-    left: 50px;
-    border-radius: 5px;
-  }
+#player {
+  width: 42px;
+  height: 42px;
+  background: cyan;
+  position: absolute;
+  bottom: 25px;
+  left: 60px;
+  border-radius: 10px;
+}
 
-  .obstacle {
-    width: 40px;
-    height: 60px;
-    background: lime;
-    position: absolute;
-    bottom: 20px;
-    right: -40px;
-  }
+.obstacle {
+  width: 40px;
+  height: 55px;
+  background: red;
+  position: absolute;
+  bottom: 25px;
+  right: -60px;
+  border-radius: 6px;
+}
 
-  #score {
-    font-size: 20px;
-    margin: 10px;
-  }
+.screen {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
 
-  .screen {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.85);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-  }
+button {
+  padding: 12px 26px;
+  font-size: 18px;
+  background: cyan;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
 
-  button {
-    padding: 12px 25px;
-    font-size: 18px;
-    border: none;
-    border-radius: 8px;
-    background: red;
-    color: white;
-    cursor: pointer;
-  }
+#score {
+  font-size: 20px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>🎮 Life & Erbah</h2>
+<h2>Life & Erbah 🎮</h2>
 <div id="score">Score: 0</div>
 
 <div id="gameContainer">
   <div id="player"></div>
 
-  <!-- Start Screen -->
   <div id="startScreen" class="screen">
     <h1>Start Game</h1>
-    <button onclick="startGame()">ابدأ اللعب</button>
+    <button onclick="startGame()">ابدأ</button>
   </div>
 
-  <!-- Game Over Screen -->
   <div id="gameOverScreen" class="screen" style="display:none;">
     <h1>Game Over</h1>
     <p id="finalScore"></p>
-    <button onclick="startGame()">إعادة المحاولة</button>
-
-    <!-- إعلان بعد الخسارة -->
-    <div style="margin-top:15px;">
-      <script src="https://pl28472784.effectivegatecpm.com/41/98/fb/4198fbcafe6a6b21b4429168fe916391.js"></script>
-    </div>
+    <button onclick="startGame()">إعادة</button>
   </div>
 </div>
 
-<!-- إعلان ثابت تحت اللعبة -->
-<div style="margin:20px;">
-  <script>
-    atOptions = {
-      'key' : '82acc990763bc92cb6c09d0949568ffc',
-      'format' : 'iframe',
-      'height' : 250,
-      'width' : 300,
-      'params' : {}
-    };
-  </script>
-  <script src="https://www.highperformanceformat.com/82acc990763bc92cb6c09d0949568ffc/invoke.js"></script>
-</div>
-
 <script>
-let player = document.getElementById("player");
-let game = document.getElementById("gameContainer");
-let scoreText = document.getElementById("score");
-let startScreen = document.getElementById("startScreen");
-let gameOverScreen = document.getElementById("gameOverScreen");
-let finalScore = document.getElementById("finalScore");
+const player = document.getElementById("player");
+const game = document.getElementById("gameContainer");
+const scoreText = document.getElementById("score");
+const startScreen = document.getElementById("startScreen");
+const gameOverScreen = document.getElementById("gameOverScreen");
+const finalScore = document.getElementById("finalScore");
 
-let isJumping = false;
-let gravity = 0;
-let score = 0;
+let velocity = 0;
+let gravity = 0.6;
+let jumpPower = 13;
+let ground = 25;
+let isRunning = false;
+
 let obstacle;
-let gameLoop;
-let obstacleLoop;
+let obstacleSpeed = 3;
+let score = 0;
+let loop;
 
 function startGame() {
   score = 0;
-  gravity = 0;
-  player.style.bottom = "20px";
-  scoreText.innerText = "Score: 0";
+  obstacleSpeed = 3;
+  velocity = 0;
+  player.style.bottom = ground + "px";
+
   startScreen.style.display = "none";
   gameOverScreen.style.display = "none";
 
   if (obstacle) obstacle.remove();
-
   obstacle = document.createElement("div");
-  obstacle.classList.add("obstacle");
+  obstacle.className = "obstacle";
   game.appendChild(obstacle);
-  obstacle.style.right = "-40px";
+  obstacle.style.right = "-200px";
 
-  gameLoop = setInterval(updateGame, 20);
-  obstacleLoop = setInterval(moveObstacle, 20);
+  isRunning = true;
+  loop = setInterval(update, 20);
 }
 
-function updateGame() {
-  gravity -= 0.8;
-  let bottom = parseInt(player.style.bottom);
-  bottom += gravity;
+function update() {
+  // فيزياء القفز
+  velocity -= gravity;
+  let bottom = parseFloat(player.style.bottom);
+  bottom += velocity;
 
-  if (bottom <= 20) {
-    bottom = 20;
-    isJumping = false;
+  if (bottom <= ground) {
+    bottom = ground;
+    velocity = 0;
   }
 
   player.style.bottom = bottom + "px";
 
-  score++;
+  // تحريك العقبة
+  let right = parseFloat(obstacle.style.right);
+  right += obstacleSpeed;
+
+  if (right > 500) {
+    right = -200;
+    score += 10;
+
+    // تصعيد الصعوبة تدريجياً
+    if (score % 50 === 0) obstacleSpeed += 0.4;
+  }
+
+  obstacle.style.right = right + "px";
+
   scoreText.innerText = "Score: " + score;
 
   checkCollision();
 }
 
 function jump() {
-  if (!isJumping) {
-    gravity = 12;
-    isJumping = true;
+  if (velocity === 0 && isRunning) {
+    velocity = jumpPower;
   }
-}
-
-function moveObstacle() {
-  let right = parseInt(obstacle.style.right);
-  right += 5;
-
-  if (right > 440) {
-    right = -40;
-  }
-
-  obstacle.style.right = right + "px";
 }
 
 function checkCollision() {
-  let playerRect = player.getBoundingClientRect();
-  let obstacleRect = obstacle.getBoundingClientRect();
+  const p = player.getBoundingClientRect();
+  const o = obstacle.getBoundingClientRect();
 
   if (
-    playerRect.right > obstacleRect.left &&
-    playerRect.left < obstacleRect.right &&
-    playerRect.bottom > obstacleRect.top
+    p.right > o.left + 5 &&
+    p.left < o.right - 5 &&
+    p.bottom > o.top + 5
   ) {
-    gameOver();
+    endGame();
   }
 }
 
-function gameOver() {
-  clearInterval(gameLoop);
-  clearInterval(obstacleLoop);
-  finalScore.innerText = "Your Score: " + score;
+function endGame() {
+  clearInterval(loop);
+  isRunning = false;
+  finalScore.innerText = "Score: " + score;
   gameOverScreen.style.display = "flex";
 }
 
-// لمس الشاشة + ماوس
+// لمس + ماوس
 document.addEventListener("touchstart", jump);
 document.addEventListener("mousedown", jump);
 </script>
