@@ -2,285 +2,214 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Zain Abdelhay | Neon Run</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life & Erbah</title>
 
 <style>
-body{
-  margin:0;
-  background:#020617;
-  font-family:Arial;
-  color:#e5e7eb;
-  text-align:center;
-}
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: #fff;
+    text-align: center;
+  }
 
-/* صفحة البداية */
-#startScreen{
-  position:fixed;
-  inset:0;
-  background:radial-gradient(circle at top,#020617,#000);
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  z-index:10;
-}
-#startScreen h1{
-  font-size:32px;
-  color:#00ffcc;
-  text-shadow:0 0 20px #00ffcc;
-}
-#startScreen p{
-  opacity:.7;
-}
-#startScreen button{
-  margin-top:20px;
-  padding:14px 40px;
-  font-size:18px;
-  background:#00ffcc;
-  color:#000;
-  border:none;
-  border-radius:30px;
-  box-shadow:0 0 25px #00ffcc;
-}
+  #gameContainer {
+    width: 100%;
+    max-width: 400px;
+    height: 500px;
+    background: #222;
+    margin: 20px auto;
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+  }
 
-/* شارة */
-.badge{
-  margin-top:10px;
-  display:inline-block;
-  padding:6px 14px;
-  border-radius:20px;
-  background:#00ffcc;
-  color:#000;
-  font-weight:bold;
-}
+  #player {
+    width: 40px;
+    height: 40px;
+    background: red;
+    position: absolute;
+    bottom: 20px;
+    left: 50px;
+    border-radius: 5px;
+  }
 
-/* اللعبة */
-#game{
-  width:100%;
-  max-width:420px;
-  height:240px;
-  margin:15px auto;
-  background:linear-gradient(#020617,#020617);
-  border-radius:18px;
-  border:2px solid #00ffcc;
-  box-shadow:0 0 25px #00ffcc55;
-  position:relative;
-  overflow:hidden;
-}
+  .obstacle {
+    width: 40px;
+    height: 60px;
+    background: lime;
+    position: absolute;
+    bottom: 20px;
+    right: -40px;
+  }
 
-/* الأرض */
-#ground{
-  position:absolute;
-  bottom:0;
-  width:200%;
-  height:35px;
-  background:repeating-linear-gradient(
-    90deg,#022c22 0 30px,#064e3b 30px 60px
-  );
-}
+  #score {
+    font-size: 20px;
+    margin: 10px;
+  }
 
-/* اللاعب */
-#player{
-  position:absolute;
-  left:50px;
-  bottom:35px;
-  width:34px;
-  height:34px;
-  background:radial-gradient(circle at 30% 30%,#00ffcc,#008080);
-  border-radius:50%;
-  box-shadow:0 0 20px #00ffcc;
-}
+  .screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
 
-/* العوائق */
-.obstacle{
-  position:absolute;
-  bottom:35px;
-  width:26px;
-  height:42px;
-  background:linear-gradient(#ff3b3b,#7f1d1d);
-  border-radius:8px;
-  box-shadow:0 0 15px #ff3b3b;
-}
-
-/* أزرار */
-button{
-  padding:12px 30px;
-  font-size:16px;
-  background:#00ffcc;
-  color:#000;
-  border:none;
-  border-radius:12px;
-  margin:6px;
-  box-shadow:0 0 20px #00ffcc;
-}
-
-/* نبض */
-#heartbeat{
-  width:100%;
-  max-width:420px;
-  height:60px;
-  margin:20px auto;
-  background:#000;
-  border-radius:12px;
-  border:1px solid #00ffcc;
-}
-
-/* التذييل */
-footer{
-  margin-top:10px;
-  font-size:13px;
-  opacity:.6;
-}
+  button {
+    padding: 12px 25px;
+    font-size: 18px;
+    border: none;
+    border-radius: 8px;
+    background: red;
+    color: white;
+    cursor: pointer;
+  }
 </style>
 </head>
 
 <body>
 
-<div id="startScreen">
-  <h1>NEON RUN</h1>
-  <p>By Zain Abdelhay</p>
-  <button onclick="startGame()">ابدأ اللعب</button>
-</div>
+<h2>🎮 Life & Erbah</h2>
+<div id="score">Score: 0</div>
 
-<div class="badge">🆓 مجانية</div>
-<h2>🏃‍♂️ Neon Run</h2>
-<p>المسافة: <span id="score">0</span></p>
-
-<div id="game">
-  <div id="ground"></div>
+<div id="gameContainer">
   <div id="player"></div>
+
+  <!-- Start Screen -->
+  <div id="startScreen" class="screen">
+    <h1>Start Game</h1>
+    <button onclick="startGame()">ابدأ اللعب</button>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="gameOverScreen" class="screen" style="display:none;">
+    <h1>Game Over</h1>
+    <p id="finalScore"></p>
+    <button onclick="startGame()">إعادة المحاولة</button>
+
+    <!-- إعلان بعد الخسارة -->
+    <div style="margin-top:15px;">
+      <script src="https://pl28472784.effectivegatecpm.com/41/98/fb/4198fbcafe6a6b21b4429168fe916391.js"></script>
+    </div>
+  </div>
 </div>
 
-<button onclick="jump()">قفز</button>
-<button onclick="restart()">إعادة بدء</button>
-<div id="msg"></div>
-
-<canvas id="heartbeat"></canvas>
-
-<footer>© Zain Abdelhay</footer>
+<!-- إعلان ثابت تحت اللعبة -->
+<div style="margin:20px;">
+  <script>
+    atOptions = {
+      'key' : '82acc990763bc92cb6c09d0949568ffc',
+      'format' : 'iframe',
+      'height' : 250,
+      'width' : 300,
+      'params' : {}
+    };
+  </script>
+  <script src="https://www.highperformanceformat.com/82acc990763bc92cb6c09d0949568ffc/invoke.js"></script>
+</div>
 
 <script>
-/* ===== عناصر ===== */
-const game=document.getElementById("game");
-const player=document.getElementById("player");
-const ground=document.getElementById("ground");
-const scoreEl=document.getElementById("score");
-const msg=document.getElementById("msg");
-const startScreen=document.getElementById("startScreen");
+let player = document.getElementById("player");
+let game = document.getElementById("gameContainer");
+let scoreText = document.getElementById("score");
+let startScreen = document.getElementById("startScreen");
+let gameOverScreen = document.getElementById("gameOverScreen");
+let finalScore = document.getElementById("finalScore");
 
-/* ===== متغيرات اللعبة ===== */
-let y=0,v=0,gravity=0.8,jumping=false;
-let speed=4,score=0,gameOver=true;
-let obstacles=[];
-let distance=0,minDistance=240;
+let isJumping = false;
+let gravity = 0;
+let score = 0;
+let obstacle;
+let gameLoop;
+let obstacleLoop;
 
-/* ===== بدء ===== */
-function startGame(){
-  startScreen.style.display="none";
-  restart();
-}
-function restart(){
-  obstacles.forEach(o=>o.remove());
-  obstacles=[];
-  score=0;
-  speed=4;
-  y=0;v=0;
-  distance=0;
-  gameOver=false;
-  msg.innerText="";
-  scoreEl.innerText=0;
-}
+function startGame() {
+  score = 0;
+  gravity = 0;
+  player.style.bottom = "20px";
+  scoreText.innerText = "Score: 0";
+  startScreen.style.display = "none";
+  gameOverScreen.style.display = "none";
 
-/* ===== قفز ===== */
-function jump(){
-  if(jumping||gameOver) return;
-  v=13;
-  jumping=true;
+  if (obstacle) obstacle.remove();
+
+  obstacle = document.createElement("div");
+  obstacle.classList.add("obstacle");
+  game.appendChild(obstacle);
+  obstacle.style.right = "-40px";
+
+  gameLoop = setInterval(updateGame, 20);
+  obstacleLoop = setInterval(moveObstacle, 20);
 }
 
-/* ===== لوب اللعبة ===== */
-setInterval(()=>{
-  if(gameOver) return;
+function updateGame() {
+  gravity -= 0.8;
+  let bottom = parseInt(player.style.bottom);
+  bottom += gravity;
 
-  v-=gravity;
-  y+=v;
-  if(y<=0){y=0;v=0;jumping=false;}
-  player.style.bottom=(35+y)+"px";
-
-  ground.style.left=(ground.offsetLeft-speed)+"px";
-  if(ground.offsetLeft<=-game.offsetWidth) ground.style.left="0px";
-
-  distance+=speed;
-  if(distance>minDistance){
-    let o=document.createElement("div");
-    o.className="obstacle";
-    o.style.right="-40px";
-    game.appendChild(o);
-    obstacles.push(o);
-    distance=0;
-    minDistance=200+Math.random()*140;
+  if (bottom <= 20) {
+    bottom = 20;
+    isJumping = false;
   }
 
-  obstacles.forEach((o,i)=>{
-    o.style.right=(parseInt(o.style.right)+speed)+"px";
-    let r1=player.getBoundingClientRect();
-    let r2=o.getBoundingClientRect();
-    if(!(r1.right<r2.left||r1.left>r2.right||r1.bottom<r2.top||r1.top>r2.bottom)){
-      msg.innerText="❌ انتهت اللعبة";
-      gameOver=true;
-    }
-    if(o.offsetLeft<-60){
-      o.remove();
-      obstacles.splice(i,1);
-      score+=10;
-      scoreEl.innerText=score;
-      if(score%100===0) speed+=0.4;
-    }
-  });
-},30);
+  player.style.bottom = bottom + "px";
 
-/* ===== نبض القلب ===== */
-const canvas=document.getElementById("heartbeat");
-const ctx=canvas.getContext("2d");
-canvas.width=420;
-canvas.height=60;
-let pulse=60;
+  score++;
+  scoreText.innerText = "Score: " + score;
 
-function heartbeat(){
-  ctx.fillStyle="#000";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  ctx.strokeStyle="#00ffcc";
-  ctx.lineWidth=2;
-  ctx.beginPath();
-  ctx.moveTo(0,canvas.height/2);
-
-  for(let i=0;i<canvas.width;i++){
-    let y=canvas.height/2;
-    if(i%pulse===pulse/2){
-      y-=20;
-    }
-    ctx.lineTo(i,y);
-  }
-  ctx.stroke();
-
-  pulse=Math.max(20,60-speed*5);
-  requestAnimationFrame(heartbeat);
+  checkCollision();
 }
-heartbeat();
+
+function jump() {
+  if (!isJumping) {
+    gravity = 12;
+    isJumping = true;
+  }
+}
+
+function moveObstacle() {
+  let right = parseInt(obstacle.style.right);
+  right += 5;
+
+  if (right > 440) {
+    right = -40;
+  }
+
+  obstacle.style.right = right + "px";
+}
+
+function checkCollision() {
+  let playerRect = player.getBoundingClientRect();
+  let obstacleRect = obstacle.getBoundingClientRect();
+
+  if (
+    playerRect.right > obstacleRect.left &&
+    playerRect.left < obstacleRect.right &&
+    playerRect.bottom > obstacleRect.top
+  ) {
+    gameOver();
+  }
+}
+
+function gameOver() {
+  clearInterval(gameLoop);
+  clearInterval(obstacleLoop);
+  finalScore.innerText = "Your Score: " + score;
+  gameOverScreen.style.display = "flex";
+}
+
+// لمس الشاشة + ماوس
+document.addEventListener("touchstart", jump);
+document.addEventListener("mousedown", jump);
 </script>
 
-  <script>
-  atOptions = {
-    'key' : '82acc990763bc92cb6c09d0949568ffc',
-    'format' : 'iframe',
-    'height' : 250,
-    'width' : 300,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highperformanceformat.com/82acc990763bc92cb6c09d0949568ffc/invoke.js"></script>
-<script src="https://pl28472784.effectivegatecpm.com/41/98/fb/4198fbcafe6a6b21b4429168fe916391.js"></script>
 </body>
 </html>
